@@ -578,35 +578,6 @@ header::after {
 .ms-val { font-family:var(--display); font-size:1.7rem; font-weight:900; letter-spacing:-0.04em; }
 .ms-lbl { font-family:var(--mono); font-size:0.62rem; color:var(--muted2); margin-top:5px; }
 
-/* ═════════════ CODE PANEL ═════════════ */
-.code-panel {
-  background:#080d17; border:1px solid rgba(255,255,255,0.07);
-  border-radius:18px; overflow:hidden; margin-top:22px;
-}
-.code-header {
-  display:flex; align-items:center; justify-content:space-between;
-  padding:13px 20px;
-  background:rgba(255,255,255,0.025); border-bottom:1px solid rgba(255,255,255,0.06);
-}
-.code-dots { display:flex; gap:7px; }
-.code-dot { width:11px; height:11px; border-radius:50%; }
-.code-dot:nth-child(1){background:#ff5f57;} .code-dot:nth-child(2){background:#febc2e;} .code-dot:nth-child(3){background:#28c840;}
-.code-file { font-family:var(--mono); font-size:0.68rem; color:var(--muted2); }
-.code-copy {
-  font-family:var(--mono); font-size:0.62rem; color:var(--muted2);
-  background:none; border:1px solid rgba(255,255,255,0.1); border-radius:7px;
-  padding:4px 12px; cursor:pointer; transition:all 0.2s;
-}
-.code-copy:hover { color:var(--cyan); border-color:var(--cyan); }
-.code-body {
-  padding:22px 24px; overflow-x:auto;
-  font-family:var(--mono); font-size:0.71rem; line-height:1.75;
-  color:#c9d1d9; max-height:420px; overflow-y:auto;
-}
-.code-body::-webkit-scrollbar { width:5px; height:5px; }
-.code-body::-webkit-scrollbar-thumb { background:rgba(255,255,255,0.08); border-radius:3px; }
-.kw{color:#ff7b72;} .fn{color:#d2a8ff;} .str{color:#a5d6ff;} .cm{color:#6e7681;} .num{color:#79c0ff;} .cls{color:#ffa657;}
-
 /* ═════════════ FOOTER ═════════════ */
 footer {
   margin-top:80px; padding:32px 0 0;
@@ -728,7 +699,7 @@ footer::before {
   <button class="s-tab" onclick="showTab('forecast',this)">7-Day Forecast</button>
   <button class="s-tab" onclick="showTab('models',this)">ML Models</button>
   <button class="s-tab" onclick="showTab('historical',this)">Historical</button>
-  <button class="s-tab" onclick="showTab('code',this)">Python Code</button>
+
 </div>
 
 <!-- ═══════════ OVERVIEW TAB ═══════════ -->
@@ -934,119 +905,7 @@ footer::before {
   </div>
 </div>
 
-<!-- ═══════════ PYTHON CODE TAB ═══════════ -->
-<div id="tab-code" style="display:none">
-  <div class="card">
-    <div class="card-top-line"></div>
-    <div class="section-label">Source Code — Python ML Backend</div>
-    <p style="font-size:0.85rem;color:var(--muted);margin-bottom:18px;line-height:1.75;font-weight:300">
-      The backend is a Flask API with a real scikit-learn stacking ensemble. Install dependencies and run <code style="background:rgba(255,255,255,0.06);padding:2px 9px;border-radius:7px;font-family:var(--mono);font-size:0.72rem">python app.py</code> to start the server. This frontend auto-connects to <code style="background:rgba(255,255,255,0.06);padding:2px 9px;border-radius:7px;font-family:var(--mono);font-size:0.72rem">localhost:5000</code> — if offline it uses the built-in simulation engine.
-    </p>
-    <div class="code-panel">
-      <div class="code-header">
-        <div class="code-dots"><div class="code-dot"></div><div class="code-dot"></div><div class="code-dot"></div></div>
-        <div class="code-file">app.py — AtmosAI Flask Backend</div>
-        <button class="code-copy" onclick="copyCode()">Copy</button>
-      </div>
-      <div class="code-body" id="codeBody">
-<span class="cm"># AtmosAI — Stacking Ensemble Weather Prediction Engine</span>
-<span class="cm"># B.Tech CSBS Final Year Project 2026 | Techno India University, Kolkata</span>
-<span class="cm"># Flask + scikit-learn + XGBoost</span>
 
-<span class="kw">from</span> flask <span class="kw">import</span> Flask, jsonify, request
-<span class="kw">from</span> sklearn.ensemble <span class="kw">import</span> <span class="cls">RandomForestRegressor</span>, <span class="cls">GradientBoostingRegressor</span>, <span class="cls">StackingRegressor</span>
-<span class="kw">from</span> sklearn.linear_model <span class="kw">import</span> <span class="cls">Ridge</span>, <span class="cls">LinearRegression</span>
-<span class="kw">from</span> sklearn.svm <span class="kw">import</span> <span class="cls">SVR</span>
-<span class="kw">from</span> sklearn.preprocessing <span class="kw">import</span> <span class="cls">StandardScaler</span>
-<span class="kw">from</span> sklearn.model_selection <span class="kw">import</span> cross_val_score, <span class="cls">KFold</span>
-<span class="kw">from</span> sklearn.metrics <span class="kw">import</span> mean_squared_error, r2_score
-<span class="kw">import</span> xgboost <span class="kw">as</span> xgb
-<span class="kw">import</span> numpy <span class="kw">as</span> np, pandas <span class="kw">as</span> pd
-
-app = <span class="cls">Flask</span>(__name__)
-
-<span class="cm"># ── Base learners (Level-0 models) ──────────────────────</span>
-base_learners = [
-    (<span class="str">"random_forest"</span>,  <span class="cls">RandomForestRegressor</span>(n_estimators=<span class="num">120</span>, max_depth=<span class="num">10</span>, random_state=<span class="num">42</span>)),
-    (<span class="str">"grad_boost"</span>,     <span class="cls">GradientBoostingRegressor</span>(n_estimators=<span class="num">100</span>, learning_rate=<span class="num">0.08</span>)),
-    (<span class="str">"xgboost"</span>,        xgb.<span class="cls">XGBRegressor</span>(n_estimators=<span class="num">150</span>, learning_rate=<span class="num">0.07</span>, verbosity=<span class="num">0</span>)),
-    (<span class="str">"svr"</span>,            <span class="cls">SVR</span>(kernel=<span class="str">"rbf"</span>, C=<span class="num">10</span>, gamma=<span class="str">"scale"</span>)),
-    (<span class="str">"ridge"</span>,          <span class="cls">Ridge</span>(alpha=<span class="num">1.0</span>)),
-]
-
-<span class="cm"># ── Meta learner (Level-1 model) ───────────────────────</span>
-stacking_model = <span class="cls">StackingRegressor</span>(
-    estimators=base_learners,
-    final_estimator=<span class="cls">LinearRegression</span>(),
-    cv=<span class="num">5</span>,          <span class="cm"># 5-fold cross-validation for OOF predictions</span>
-    passthrough=<span class="kw">False</span>,
-    n_jobs=-<span class="num">1</span>,
-)
-
-<span class="cm"># ── Train on 100-year dataset ───────────────────────────</span>
-df = generate_historical_dataset(n_years=<span class="num">100</span>)
-X  = <span class="cls">StandardScaler</span>().fit_transform(df[FEATURE_COLS])
-y  = df[<span class="str">"next_temp"</span>].values
-stacking_model.<span class="fn">fit</span>(X, y)
-
-<span class="cm"># ── Cross-validated metrics ─────────────────────────────</span>
-cv_r2 = cross_val_score(stacking_model, X, y, cv=<span class="cls">KFold</span>(n_splits=<span class="num">5</span>), scoring=<span class="str">"r2"</span>)
-<span class="fn">print</span>(<span class="str">f"Stacking R² = {cv_r2.mean():.4f} ± {cv_r2.std():.4f}"</span>)
-
-<span class="cm"># ── Prediction endpoint ─────────────────────────────────</span>
-<span class="kw">@</span>app.<span class="fn">route</span>(<span class="str">"/api/predict"</span>, methods=[<span class="str">"POST"</span>])
-<span class="kw">def</span> <span class="fn">predict</span>():
-    data    = request.<span class="fn">get_json</span>()
-    X_input = build_feature_vector(data)
-    pred    = stacking_model.<span class="fn">predict</span>(X_input)
-    risk    = compute_disaster_risk(data)
-    <span class="kw">return</span> <span class="fn">jsonify</span>({<span class="str">"forecast"</span>: pred.tolist(), <span class="str">"risk"</span>: risk})
-
-<span class="kw">if</span> __name__ == <span class="str">"__main__"</span>:
-    app.<span class="fn">run</span>(debug=<span class="kw">True</span>, port=<span class="num">5000</span>)
-      </div>
-    </div>
-    <div style="margin-top:22px">
-      <div class="section-label">Install & Run</div>
-      <div class="code-panel">
-        <div class="code-header">
-          <div class="code-dots"><div class="code-dot"></div><div class="code-dot"></div><div class="code-dot"></div></div>
-          <div class="code-file">Terminal</div>
-        </div>
-        <div class="code-body">
-<span class="cm"># 1. Install dependencies</span>
-pip install -r requirements.txt
-
-<span class="cm"># 2. Start Flask API (trains model automatically)</span>
-python app.py
-
-<span class="cm"># 3. API will be available at:</span>
-<span class="cm">#    POST http://localhost:5000/api/predict</span>
-<span class="cm">#    GET  http://localhost:5000/api/metrics</span>
-<span class="cm">#    GET  http://localhost:5000/api/historical</span>
-
-<span class="cm"># 4. Open index.html in browser — auto-connects to Flask</span>
-        </div>
-      </div>
-    </div>
-    <div style="margin-top:22px">
-      <div class="section-label">requirements.txt</div>
-      <div class="code-panel">
-        <div class="code-header">
-          <div class="code-dots"><div class="code-dot"></div><div class="code-dot"></div><div class="code-dot"></div></div>
-          <div class="code-file">requirements.txt</div>
-        </div>
-        <div class="code-body">flask==3.0.0
-flask-cors==4.0.0
-numpy==1.26.4
-pandas==2.2.1
-scikit-learn==1.4.1
-xgboost==2.0.3
-gunicorn==21.2.0</div>
-      </div>
-    </div>
-  </div>
-</div>
 
 <!-- ── FOOTER ── -->
 <footer>
@@ -1389,7 +1248,7 @@ function renderHistorical(){
 //   TABS
 // ═══════════════════════════════════════════════
 function showTab(name,btn){
-  ["overview","forecast","models","historical","code"].forEach(t=>{
+  ["overview","forecast","models","historical"].forEach(t=>{
     document.getElementById("tab-"+t).style.display=t===name?"":"none";
   });
   document.querySelectorAll(".s-tab").forEach(b=>b.classList.remove("on"));
@@ -1403,12 +1262,6 @@ function useGPS(){
   const cities=["Mumbai, India","Delhi, India","Kolkata, India","Tokyo, Japan","London, UK","Dubai, UAE","Sydney, Australia"];
   document.getElementById("cityInput").value=cities[Math.floor(Math.random()*cities.length)];
   runPrediction();
-}
-
-function copyCode(){
-  navigator.clipboard?.writeText(document.getElementById("codeBody").innerText);
-  const btn=document.querySelector(".code-copy"); btn.textContent="Copied!";
-  setTimeout(()=>btn.textContent="Copy",2000);
 }
 
 // ═══════════════════════════════════════════════
